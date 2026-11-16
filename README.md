@@ -103,7 +103,3 @@ AI_LOG.md              GenAI usage log (course requirement)
 
 ## Team
 
-| Role | Name |
-| --- | --- |
-| Project manager | Reen |
-| _add members_ | |
