@@ -54,6 +54,7 @@ class OllamaProvider:
         self.model = settings.llm_model
         self.base = settings.llm_base_url.rstrip("/")
         self.timeout = settings.llm_timeout_s
+        self.num_ctx = getattr(settings, "llm_num_ctx", 32768)
 
     def complete_json(self, system: str, prompt: str, schema: dict) -> LLMResult:
         body = {
@@ -61,7 +62,7 @@ class OllamaProvider:
             "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
             "format": schema,
             "stream": False,
-            "options": {"temperature": 0},
+            "options": {"temperature": 0, "num_ctx": self.num_ctx},
         }
         try:
             r = httpx.post(f"{self.base}/api/chat", json=body, timeout=self.timeout)

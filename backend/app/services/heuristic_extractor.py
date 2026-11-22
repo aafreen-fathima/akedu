@@ -17,7 +17,7 @@ TYPE_WORDS = [
     ("midterm", r"\bmid-?term\b"),
     ("quiz", r"\bquiz(zes)?\b|\btest\b"),
     ("presentation", r"\bpresentation|\bpitch|\bdemo(nstration)?\b"),
-    ("project", r"\bproject|\bmilestone|\bdeliverable|\breport\b|\bproposal\b"),
+    ("project", r"\bproject|\bmilestone|\bdeliverable|\breport\b|\bproposal\b|\bcase\s*stud"),
     ("lab", r"\blab\b"),
     ("assignment", r"\bassignment|\bhomework|\bjournal|\bLJ\d|\bexercise\b"),
 ]
@@ -111,4 +111,24 @@ def extract(prompt: str) -> dict:
             "source_page": page,
             "confidence": 0.6 if (due and weight) else 0.4,
         })
-    return {"course_code": course_code, "course_title": "", "assessments": items}
+
+    expanded = []
+    for item in items:
+        title = item["title"]
+        m = re.search(r"\(\s*(\d{1,2})\s*\)\s*$", title)
+        m = m or re.search(r"\b(\d{1,2})\s+(assignments|case\s*studies|quizzes|projects|presentations|labs|reports|journals|exams)\b", title, re.I)
+        if m and int(m.group(1)) > 1:
+            count = int(m.group(1))
+            base = re.sub(r"\s*\(\s*\d{1,2}\s*\)\s*$", "", title).strip()
+            base = re.sub(r"\b\d{1,2}\s+(assignments|case\s*studies|quizzes|projects|presentations|labs|reports|journals|exams)\b", r"\1", base, flags=re.I)
+            base = re.sub(r"\bCase\s+studies\b", "Case Study", base, flags=re.I)
+            base = re.sub(r"\bAssignments\b", "Assignment", base, flags=re.I)
+            for number in range(1, count + 1):
+                copied = dict(item)
+                copied["title"] = f"{base} #{number}"
+                copied["weight_percent"] = round(item["weight_percent"] / count, 2) if item["weight_percent"] is not None else None
+                copied["confidence"] = min(item["confidence"], 0.8)
+                expanded.append(copied)
+        else:
+            expanded.append(item)
+    return {"course_code": course_code, "course_title": "", "assessments": expanded}

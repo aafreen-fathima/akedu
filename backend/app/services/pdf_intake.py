@@ -44,6 +44,7 @@ def validate_pdf(filename: str, data: bytes, max_mb: int) -> PdfInfo:
 
 def extract_pages(data: bytes) -> list[str]:
     pages: list[str] = []
+    seen: set[str] = set()
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         for page in pdf.pages:
             text = page.extract_text() or ""
@@ -52,5 +53,10 @@ def extract_pages(data: bytes) -> list[str]:
                 rows = [" | ".join(c or "" for c in row) for row in table if row]
                 if rows:
                     text += "\n" + "\n".join(rows)
+            # deduplicate pages: some PDFs render each page twice (2-up layout)
+            fingerprint = text.strip()[:300]
+            if fingerprint and fingerprint in seen:
+                continue
+            seen.add(fingerprint)
             pages.append(text)
     return pages
