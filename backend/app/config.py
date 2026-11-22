@@ -6,7 +6,12 @@ from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env from the project root (two levels up from this file: app/ -> backend/ -> project root)
+load_dotenv(BASE_DIR.parent / ".env")
 
 
 def _env(name: str, default: str) -> str:
@@ -25,7 +30,8 @@ class Settings:
     llm_model: str = field(default_factory=lambda: _env("AKEDU_LLM_MODEL", "llama3.1:8b"))
     llm_base_url: str = field(default_factory=lambda: _env("AKEDU_LLM_BASE_URL", "http://localhost:11434"))
     llm_api_key: str = field(default_factory=lambda: _env("AKEDU_LLM_API_KEY", ""))
-    llm_timeout_s: float = field(default_factory=lambda: float(_env("AKEDU_LLM_TIMEOUT_S", "120")))
+    llm_timeout_s: float = field(default_factory=lambda: float(_env("AKEDU_LLM_TIMEOUT_S", "300")))
+    llm_num_ctx: int = field(default_factory=lambda: int(_env("AKEDU_LLM_NUM_CTX", "32768")))
     llm_labels: bool = field(default_factory=lambda: _env("AKEDU_LLM_LABELS", "false").lower() == "true")
 
     # Crunch rule (R6) and planner defaults (ADR-03)
